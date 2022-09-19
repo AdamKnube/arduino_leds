@@ -75,13 +75,18 @@ void particle_explode(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
   }
 }
 
+void blow_shit_up(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {
+  for (int i = 0; i < 6; i++){
+    particle_collide();
+    particle_explode();
+  }  
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
-  int low = 90;
-  int high = 175;
-  int timer = 50;
-  ramp_up(low, high, timer);
-  ramp_down(high, low, timer);
-  particle_collide(low, high, timer);
-  particle_explode(low, high, timer);
+  //ramp_up();
+  //ramp_down();
+  //particle_collide();
+  //particle_explode();
+  blow_shit_up();
 }
