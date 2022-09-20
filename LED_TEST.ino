@@ -1,5 +1,6 @@
 #include <FastLED.h>
-//#define DEBUG
+#define DEBUG
+#define EYE_BURN
 #define LED_PIN 26
 #define DELAY_TIME 25
 #define TOTAL_LEDS 300
@@ -46,10 +47,17 @@ void particle_collide(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
   for (int count = 0; count <= collision; count++) {
     led_reset();
     CRGB::HTMLColorCode this_colour = CRGB::White;    
-    if (count == collision) { this_colour = CRGB::White; }
+#ifdef EYE_BURN
+    if (count >= collision - 1) { this_colour = CRGB::White; }
+    else if (count > changeover * 2) { this_colour = CRGB::Orange; }
+    else if (count < changeover) { this_colour = CRGB::Red; }
+    else { this_colour = CRGB::OrangeRed; }   
+#else
+    if (count >= collision - 1) { this_colour = CRGB::White; }
     else if (count > changeover * 2) { this_colour = CRGB::Green; }
     else if (count < changeover) { this_colour = CRGB::Red; }
     else { this_colour = CRGB::Blue; }   
+#endif
     led_strip[start + count] = this_colour;
     led_strip[end - count] = this_colour;
     FastLED.show();
@@ -64,10 +72,17 @@ void particle_explode(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
   for (int count = 0; count <= collision; count++) {
     led_reset();
     CRGB::HTMLColorCode this_colour = CRGB::White;    
-    if (count == 0) { this_colour = CRGB::White; }
+#ifdef EYE_BURN
+    if (count <= 1) { this_colour = CRGB::White; }
+    else if (count > changeover * 2) { this_colour = CRGB::Red; }
+    else if (count < changeover) { this_colour = CRGB::Orange; }
+    else { this_colour = CRGB::OrangeRed; }   
+#else
+    if (count <= 1) { this_colour = CRGB::White; }
     else if (count > changeover * 2) { this_colour = CRGB::Red; }
     else if (count < changeover) { this_colour = CRGB::Green; }
     else { this_colour = CRGB::Blue; }   
+#endif    
     led_strip[start + collision + count] = this_colour;
     led_strip[end - collision - count] = this_colour;
     FastLED.show();
@@ -86,7 +101,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   //ramp_up();
   //ramp_down();
-  //particle_collide();
-  //particle_explode();
-  blow_shit_up();
+  particle_collide();
+  particle_explode();
+  //blow_shit_up();
 }
