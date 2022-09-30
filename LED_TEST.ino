@@ -1,11 +1,12 @@
 #include <string.h>
 #include <FastLED.h>
-//#define DEBUG
+#define DEBUG
 #define HARRY
 #define CHASER
 //#define OLD_SKOOL
 //#define SEBASTIEN
-#define VCC_PIN 0
+#define V05_PIN 0
+#define V12_PIN 1
 #define LED_PIN 26
 #define DELAY_TIME 25
 #define TOTAL_LEDS 300
@@ -20,10 +21,13 @@ CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLCol
 CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLColorCode::Blue, CRGB::HTMLColorCode::Orange, CRGB::HTMLColorCode::Red };
 #endif
 
+bool firstRun = true;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  pinMode(VCC_PIN, INPUT); 
+  pinMode(V05_PIN, INPUT); 
+  pinMode(V12_PIN, INPUT); 
   pinMode(LED_PIN, OUTPUT);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(led_strip, TOTAL_LEDS);
 }
@@ -65,17 +69,30 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void show_voltage() {
-  int vcc = analogRead(VCC_PIN);   
-  dprint("RAW: ");
-  dprint(vcc);
-  dprint(", VCC: ");
-  dprint(fmap(vcc, 0, 1024, 0, 26), true);
-#ifndef DEBUG
-  Serial.print("5VDC Bus: ");
-  Serial.print(fmap(vcc, 0, 1024, 0, 26));
-  Serial.println("v");
-#endif
+void show_voltage(bool csv = true) {
+  int v05 = analogRead(V05_PIN);   
+  int v12 = analogRead(V12_PIN);
+  if (csv) {
+    if (firstRun) { 
+      Serial.println("5VDC Bus,12VDC Bus");
+      firstRun = false;
+    }
+    Serial.print(fmap(v05, 0, 1024, 0, 26));
+    Serial.print("v,");
+    Serial.print(fmap(v12, 0, 1024, 0, 26));
+    Serial.println("v");
+  }
+  else {
+    dprint("RAW 5V: ");
+    dprint(v05);
+    dprint(", V05: ");
+    dprint(fmap(v05, 0, 1024, 0, 26));    
+    dprint("v, RAW 12V: ");
+    dprint(v12);
+    dprint(", V12: ");
+    dprint(fmap(v12, 0, 1024, 0, 26));        
+    dprint("v.", true);
+  }
 }
 
 void ramp_up(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {
@@ -132,7 +149,7 @@ void particle_collide(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
     }
 #endif
     FastLED.show();
-    show_voltage();
+    show_voltage(false);
     delay(timing);    
   }
 }
@@ -167,7 +184,7 @@ void particle_explode(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
     }
 #endif
     FastLED.show();
-    show_voltage();
+    show_voltage(false);
     delay(timing);    
   }
 }
