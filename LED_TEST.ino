@@ -1,6 +1,6 @@
 #include <string.h>
 #include <FastLED.h>
-#define DEBUG
+//#define DEBUG
 #define HARRY
 #define CHASER
 //#define OLD_SKOOL
@@ -14,7 +14,7 @@ CRGB led_strip[TOTAL_LEDS];
 CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::Green, CRGB::HTMLColorCode::Red, CRGB::HTMLColorCode::Blue, CRGB::HTMLColorCode::Orange };
 #endif
 #ifdef HARRY
-CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLColorCode::Blue, CRGB::HTMLColorCode::Purple, CRGB::HTMLColorCode::Red };
+CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLColorCode::Yellow, CRGB::HTMLColorCode::Green, CRGB::HTMLColorCode::Blue };
 #endif
 #ifdef OLD_SKOOL
 CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLColorCode::Blue, CRGB::HTMLColorCode::Orange, CRGB::HTMLColorCode::Red };
@@ -22,19 +22,19 @@ CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLCol
 
 void setup() {
   // put your setup code here, to run once:
-  #ifdef DEBUG
-    Serial.begin(9600);
-  #endif
+  Serial.begin(9600);
+  pinMode(VCC_PIN, INPUT); 
+  pinMode(LED_PIN, OUTPUT);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(led_strip, TOTAL_LEDS);
 }
 
-#ifdef HARRY
+#ifdef SEBASTIEN
 void led_reset(int colour = 1) { memset(led_strip, colour, TOTAL_LEDS * 3); }
 #else
 void led_reset(int colour = 0) { memset(led_strip, colour, TOTAL_LEDS * 3); }
 #endif
 
-void dprint(char* message = "", bool newline = false) {
+void dprint(char message[] = "", bool newline = false) {
 #ifdef DEBUG  
   if (newline) { Serial.println(message); }
   else { Serial.print(message); }
@@ -43,22 +43,39 @@ void dprint(char* message = "", bool newline = false) {
 #endif
 }
 
+void dprint(int message = 0, bool newline = false) {
+#ifdef DEBUG  
+  if (newline) { Serial.println(message); }
+  else { Serial.print(message); }
+#else
+  return;
+#endif
+}
+
+void dprint(float message = 0, bool newline = false) {
+#ifdef DEBUG  
+  if (newline) { Serial.println(message); }
+  else { Serial.print(message); }
+#else
+  return;
+#endif
+}
+
+float fmap(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void show_voltage() {
-  float vcc = analogRead(VCC_PIN);   
-  int val1 = vcc / 3.9;
-  int val5 = (int)val1;
-  int val3 = val5 / 100;
-  int val2 = (val5 % 100) / 10;
-  int val4 = val5 % 10;
-  char vccstr[32];
-  dprint("Raw VCC: ");
-  itoa(val3, vccstr, 10);
-  dprint(vccstr);
-  itoa(val2, vccstr, 10);
-  dprint(vccstr);
-  dprint(".");
-  itoa(val4, vccstr, 10);
-  dprint(vccstr, true);  
+  int vcc = analogRead(VCC_PIN);   
+  dprint("RAW: ");
+  dprint(vcc);
+  dprint(", VCC: ");
+  dprint(fmap(vcc, 0, 1024, 0, 26), true);
+#ifndef DEBUG
+  Serial.print("5VDC Bus: ");
+  Serial.print(fmap(vcc, 0, 1024, 0, 26));
+  Serial.println("v");
+#endif
 }
 
 void ramp_up(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {
