@@ -3,7 +3,7 @@
 #define DEBUG
 #define V05_PIN A0
 #define V12_PIN A1
-#define LED_PIN 26
+#define LED_PIN 34
 #define DELAY_TIME 25
 #define TOTAL_LEDS 300
 CRGB led_strip[TOTAL_LEDS];
