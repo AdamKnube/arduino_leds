@@ -4,8 +4,10 @@
 #define V05_PIN A0
 #define V12_PIN A1
 #define LED_PIN 34
+#define BUT_PIN 21
 #define DELAY_TIME 25
 #define TOTAL_LEDS 300
+bool led_status = false;
 CRGB led_strip[TOTAL_LEDS];
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 CRGB::HTMLColorCode seb_colours[4] = { CRGB::HTMLColorCode::White, CRGB::HTMLColorCode::Yellow, CRGB::HTMLColorCode::Green, CRGB::HTMLColorCode::Blue };
@@ -16,15 +18,28 @@ void setup() {
 #ifdef DEBUG
   Serial.begin(9600);
 #endif
+  pinMode(BUT_PIN, INPUT);
   pinMode(V05_PIN, INPUT); 
   pinMode(V12_PIN, INPUT); 
   pinMode(LED_PIN, OUTPUT);    
   FastLED.addLeds<NEOPIXEL, LED_PIN>(led_strip, TOTAL_LEDS);
 }
 
-void led_reset(int colour = 0) { memset(led_strip, colour, TOTAL_LEDS * 3); }
+void led_reset(int colour = 0, bool reset = false) { 
+  memset(led_strip, colour, TOTAL_LEDS * 3); 
+  if (reset == true) { FastLED.show(); }
+}
 
 void dprint(char message[] = "", bool newline = false) {
+#ifdef DEBUG  
+  if (newline) { Serial.println(message); }
+  else { Serial.print(message); }
+#else
+  return;
+#endif
+}
+
+void dprint(bool message = false, bool newline = false) {
 #ifdef DEBUG  
   if (newline) { Serial.println(message); }
   else { Serial.print(message); }
@@ -63,9 +78,9 @@ void show_voltage() {
   lcd.print(fmap(v05, 0, 1024, 0, 26));
   lcd.print("v");
   lcd.setCursor(0, 1);
-  lcd.print("12vDC Bus: ");
-  lcd.print(fmap(v12, 0, 1024, 0, 26));
-  lcd.print("v");
+  lcd.print("LED Status: ");
+  if (led_status == true) { lcd.print("ON "); }
+  else { lcd.print("OFF"); }
 #ifdef DEBUG
   dprint("RAW 5V: ");
   dprint(v05);
@@ -104,7 +119,9 @@ void ramp_down(int start = TOTAL_LEDS - 1, int end = 0, int timing = DELAY_TIME)
   }
 }
 
-void particle_collide(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {
+void particle_collide(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {  
+  show_voltage();
+  if (led_status == false) { return; }
   int num_leds = end - start;
   int collision = num_leds / 2;
   int changeover = collision / 3;
@@ -125,13 +142,14 @@ void particle_collide(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
       led_strip[start + count - 3] = seb_colours[3]; 
       led_strip[end - count + 3] = seb_colours[3];
     }
-    FastLED.show();
-    show_voltage();
+    FastLED.show();    
     delay(timing);    
   }
 }
 
 void particle_explode(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELAY_TIME) {
+  show_voltage();
+  if (led_status == false) { return; }
   int num_leds = end - start;
   int collision = num_leds / 2;
   int changeover = collision / 3;
@@ -152,8 +170,7 @@ void particle_explode(int start = 0, int end = TOTAL_LEDS - 1, int timing = DELA
       led_strip[start + collision + count - 3] = seb_colours[3];
       led_strip[end - collision - count + 3] = seb_colours[3];
     }
-    FastLED.show();
-    show_voltage();
+    FastLED.show();    
     delay(timing);    
   }
 }
@@ -169,7 +186,14 @@ void loop() {
   //ramp_down();
   //particle_collide();
   //particle_explode();
-  blow_shit_up();
+  led_reset(0, true);
+  if (digitalRead(BUT_PIN) == LOW) { 
+    if (led_status == true) { led_status = false; }
+    else { led_status = true; }
+    delay(1000);
+  }
+  dprint(led_status, true);
+  blow_shit_up();    
 }
 
 
